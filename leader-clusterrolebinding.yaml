@@ -1,0 +1,25 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: leader-election
+rules:
+#  allow management of leases for any namespace
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "watch", "list", "put", "create", "delete", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: leader-elector
+  namespace: default
+subjects:
+# bind to the default service account
+  - kind: ServiceAccount
+    name: default
+    namespace: default
+roleRef:
+#  bind to the leader-election role
+  kind: ClusterRole
+  name: leader-election
+  apiGroup: rbac.authorization.k8s.io

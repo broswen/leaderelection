@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leader
+  namespace: default
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: leader
+      app.kubernetes.io/instance: leader
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: leader
+        app.kubernetes.io/instance: leader
+    spec:
+#     attempt to schedule pods on separate failure domains (nodes)
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: leader
+      serviceAccountName: default
+      containers:
+        - name: leader
+          image: "broswen/leader:latest"
+          imagePullPolicy: Always
+          env:
+            - name: LOCK_NAME
+              value: leader
+            - name: NAMESPACE
+              value: default
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
