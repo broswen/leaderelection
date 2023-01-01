@@ -10,6 +10,8 @@ import (
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -98,6 +100,9 @@ func main() {
 		leaderElector.Run(ctx)
 	}()
 
+	sigs := make(chan os.Signal)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
 	//wait until leading
 	select {
 	case <-leading:
@@ -111,6 +116,9 @@ func main() {
 			log.Info().Msg("doing work...")
 		case <-ctx.Done():
 			log.Info().Msg("context cancelled, shutting down")
+			os.Exit(0)
+		case s := <-sigs:
+			log.Info().Str("signal", s.String()).Msg("signal received")
 			os.Exit(0)
 		}
 	}
